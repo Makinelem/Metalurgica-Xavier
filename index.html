@@ -125,10 +125,14 @@
         </div>
       </div>
 
-      <!-- Imprimir -->
-      <div class="pt-2 border-t">
+      <!-- Imprimir e Compartilhar -->
+      <div class="pt-2 border-t space-y-2">
         <button onclick="window.print()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow text-sm transition flex items-center justify-center gap-2 cursor-pointer">
           <span>🖨️</span> Imprimir / Salvar PDF
+        </button>
+
+        <button onclick="compartilharOrcamento()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+          <span>📲</span> Compartilhar
         </button>
       </div>
     </div>
@@ -167,13 +171,13 @@
           <div class="py-6 text-xs grid grid-cols-12 gap-4">
             <div class="col-span-8 space-y-1">
               <p class="font-bold text-gray-800 text-xs mb-1">Destinatário / Cliente:</p>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-name">Nome/ Razão social</p>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
+              <p class="text-gray-900 font-semibold text-xs" id="view-client-name">Nome/ Razão social</p>
+              <p class="text-gray-600 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
+              <p class="text-gray-700 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
             </div>
             <div class="col-span-4 text-right flex flex-col justify-start">
               <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">CPF / CNPJ</span>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
+              <p class="text-gray-900 font-semibold text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
             </div>
           </div>
 
@@ -252,6 +256,32 @@
                           String(today.getMonth() + 1).padStart(2, '0') + '/' + 
                           today.getFullYear();
     document.getElementById('view-date').innerText = formattedDate;
+
+    // COMPARTILHAMENTO NATIVO (MOBILE / WEB SHARE API)
+    async function compartilharOrcamento() {
+      const cliente = document.getElementById('input-client-name').value.trim() || 'Cliente';
+      const numero = document.getElementById('view-number').innerText;
+      const total = document.getElementById('view-total').innerText;
+
+      const dadosCompartilhamento = {
+        title: `Orçamento Nº ${numero} - Metalúrgica Xavier`,
+        text: `Olá, ${cliente}! Segue o resumo do seu Orçamento Nº ${numero}.\nValor Total: ${total}`,
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(dadosCompartilhamento);
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            alert('Erro ao abrir as opções de compartilhamento.');
+          }
+        }
+      } else {
+        navigator.clipboard.writeText(`${dadosCompartilhamento.text}\n${dadosCompartilhamento.url}`);
+        alert('Link e resumo do orçamento copiados para a área de transferência!');
+      }
+    }
 
     // INPUT MASKING & EVENT LISTENERS
     document.getElementById('input-client-phone').addEventListener('input', (e) => {
