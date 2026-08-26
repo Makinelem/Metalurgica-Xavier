@@ -30,7 +30,6 @@
       background: #ffffff;
     }
 
-    /* GRID COM QTD E VALOR UNI APROXIMADOS E LINE-HEIGHT REDUZIDO EM 40% */
     .table-grid {
       display: grid;
       grid-template-columns: 45px 1fr 40px 85px 100px;
@@ -69,7 +68,7 @@
           <label class="text-xs text-gray-600 font-medium">CPF / CNPJ (Opcional)</label>
           <input type="text" id="input-client-doc" placeholder="Ex: 000.000.000-00" maxlength="18" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
         </div>
-        <button onclick="salvarClienteNaPlanilha()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+        <button id="btn-salvar-cliente" onclick="salvarClienteNaPlanilha()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
           <span>💾</span> Salvar Cliente na Planilha
         </button>
       </div>
@@ -149,24 +148,23 @@
             </div>
           </div>
 
-          <!-- DESTINATÁRIO -->
+          <!-- DESTINATÁRIO (ALINHADO E PROPORCIONAL) -->
           <div class="py-6 text-xs grid grid-cols-12 gap-4">
- 		<div class="col-span-8 space-y-1">
-   			<p class="font-bold text-gray-800 text-sm mb-1">Destinatário / Cliente:</p>
- 			<p class="text-gray-800 font-normal text-xs" id="view-client-name">Nome/ Razão social</p>
-   			<p class="text-gray-800 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
-   			<p class="text-gray-800 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
-  		</div>
-  			<div class="col-span-4 text-right flex flex-col justify-start">
-    			<span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">CPF / CNPJ</span>
-    			<p class="text-gray-900 font-normal text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
-  		</div>
-	</div>
+            <div class="col-span-8 space-y-1">
+              <p class="font-bold text-gray-800 text-xs mb-1">Destinatário / Cliente:</p>
+              <p class="text-gray-900 font-semibold text-xs" id="view-client-name">Nome/ Razão social</p>
+              <p class="text-gray-600 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
+              <p class="text-gray-700 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
+            </div>
+            <div class="col-span-4 text-right flex flex-col justify-start">
+              <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">CPF / CNPJ</span>
+              <p class="text-gray-900 font-semibold text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
+            </div>
+          </div>
 
           <!-- TABELA DE ITENS -->
           <div class="mt-2">
             
-            <!-- CABEÇALHO DA TABELA -->
             <div class="table-grid bg-[#E5E7EB] rounded-sm px-3 py-1.5 text-[11px] font-bold text-gray-700 uppercase tracking-tight">
               <div>ITEM</div>
               <div>DESCRIÇÃO DO PRODUTO</div>
@@ -175,7 +173,6 @@
               <div class="text-right">VALOR TOTAL</div>
             </div>
 
-            <!-- LINHAS DA TABELA -->
             <div id="view-items-container" class="divide-y divide-gray-100 text-xs">
               <div class="py-8 text-center text-gray-400 italic">Nenhum item cadastrado.</div>
             </div>
@@ -261,43 +258,45 @@
       e.target.value = value !== '0,00' ? value : '';
     });
 
-    function salvarClienteNaPlanilha() {
+    async function salvarClienteNaPlanilha() {
       const nome = document.getElementById('input-client-name').value.trim();
       const endereco = document.getElementById('input-client-address').value.trim();
       const telefone = document.getElementById('input-client-phone').value.trim();
       const doc = document.getElementById('input-client-doc').value.trim();
+      const btn = document.getElementById('btn-salvar-cliente');
 
       if (!nome) {
         alert("Por favor, preencha ao menos o Nome/Razão Social!");
         return;
       }
 
-      // SUBSTÍTUAS PELA URL DO SEU WEB APP GERADO NO GOOGLE APPS SCRIPT
-      const WEB_APP_URL = "SUA_URL_DO_WEB_APP_AQUI"; 
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOvhDMOY_z7nz3pG8ZFK9gm2Kqqjsn0QIWLLig3MfDbuR60OcfIBlbliOdXzDMhttLUQ/exec";
 
-      if (WEB_APP_URL === "SUA_URL_DO_WEB_APP_AQUI") {
-        alert("Cole a URL da implantação do Apps Script na variável WEB_APP_URL dentro do código!");
-        return;
-      }
+      const textoOriginal = btn.innerHTML;
+      btn.innerHTML = "⏳ Enviando...";
+      btn.disabled = true;
 
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nome: nome,
-          endereco: endereco,
-          cpfCnpj: doc,
-          contato: telefone
-        })
-      })
-      .then(() => {
+      try {
+        await fetch(WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({
+            nome: nome,
+            endereco: endereco,
+            cpfCnpj: doc,
+            contato: telefone
+          })
+        });
+
         alert("Cliente salvo na planilha com sucesso!");
-      })
-      .catch(error => {
-        console.error("Erro ao salvar:", error);
-        alert("Houve uma falha ao conectar com a planilha.");
-      });
+      } catch (error) {
+        console.error("Erro no envio:", error);
+        alert("Ocorreu um erro ao enviar os dados.");
+      } finally {
+        btn.innerHTML = textoOriginal;
+        btn.disabled = false;
+      }
     }
 
     function addItem() {
