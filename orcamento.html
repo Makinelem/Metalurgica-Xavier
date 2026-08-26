@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orçamento - Metalúrgica Xavier</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    
+    @media print {
+      body { background: none !important; padding: 0 !important; }
+      .no-print { display: none !important; }
+      #print-container { padding: 0 !important; margin: 0 !important; display: block !important; }
+      #print-area {
+        position: absolute; left: 0; top: 0;
+        width: 210mm; height: 297mm;
+        margin: 0; border: none !important;
+        box-shadow: none !important;
+        padding: 12mm 15mm !important;
+      }
+    }
+
+    .page-a4 {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+    }
+
+    /* GRID COM QTD E VALOR UNI APROXIMADOS E LINE-HEIGHT REDUZIDO EM 40% */
+    .table-grid {
+      display: grid;
+      grid-template-columns: 45px 1fr 40px 85px 100px;
+      align-items: center;
+      line-height: 0.6;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-slate-800 min-h-screen p-4 md:p-6">
+
+  <div id="print-container" class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- PAINEL LATERAL DE PREENCHIMENTO -->
+    <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-md border border-gray-200 no-print space-y-4">
+      <div class="border-b pb-3">
+        <h2 class="text-lg font-bold text-slate-900">Preenchimento do Orçamento</h2>
+        <p class="text-xs text-gray-500">Insira os dados do cliente e os itens abaixo</p>
+      </div>
+
+      <!-- Dados do Cliente -->
+      <div class="space-y-2">
+        <h3 class="font-bold text-xs text-gray-400 uppercase tracking-wider">Cliente</h3>
+        <div>
+          <label class="text-xs text-gray-600 font-medium">Nome / Razão Social</label>
+          <input type="text" id="input-client-name" placeholder="Ex: João da Silva" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600 font-medium">Endereço (Opcional)</label>
+          <input type="text" id="input-client-address" placeholder="Ex: Av. Principal, 123 - Centro" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600 font-medium">Telefone / Contato</label>
+          <input type="text" id="input-client-phone" placeholder="Ex: (86) 99999-9999" maxlength="15" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600 font-medium">CPF / CNPJ (Opcional)</label>
+          <input type="text" id="input-client-doc" placeholder="Ex: 000.000.000-00" maxlength="18" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+        </div>
+        <button onclick="salvarClienteNaPlanilha()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
+          <span>💾</span> Salvar Cliente na Planilha
+        </button>
+      </div>
+
+      <!-- Inserir Itens -->
+      <div class="space-y-2 pt-2 border-t">
+        <h3 class="font-bold text-xs text-gray-400 uppercase tracking-wider">Adicionar Produto / Serviço</h3>
+        
+        <div>
+          <label class="text-xs text-gray-600 font-medium">Nome do Item</label>
+          <input type="text" id="input-item-title" placeholder="Ex: Portão Basculante" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+        </div>
+
+        <div>
+          <label class="text-xs text-gray-600 font-medium">Descrição (Opcional)</label>
+          <input type="text" id="input-item-desc" placeholder="Ex: Medidas 3x2,5m com chapa galvanizada" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-gray-600 font-medium">Quantidade</label>
+            <input type="number" id="input-item-qty" value="1" min="1" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+          </div>
+          <div>
+            <label class="text-xs text-gray-600 font-medium">Valor Unitário (R$)</label>
+            <input type="text" id="input-item-price" placeholder="0,00" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
+          </div>
+        </div>
+        <button onclick="addItem()" type="button" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg text-xs transition">
+          + Inserir Item
+        </button>
+      </div>
+
+      <!-- Lista no Painel -->
+      <div class="pt-2 border-t">
+        <h3 class="font-bold text-xs text-gray-400 uppercase tracking-wider mb-2">Itens na Lista (<span id="items-count">0</span>)</h3>
+        <div id="panel-items-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+          <p class="text-xs text-gray-400 italic">Nenhum item adicionado ainda.</p>
+        </div>
+      </div>
+
+      <!-- Imprimir -->
+      <div class="pt-2 border-t">
+        <button onclick="window.print()" type="button" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+          <span>🖨️</span> Imprimir / Salvar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- FOLHA A4 -->
+    <div class="lg:col-span-8 flex justify-center">
+      <div id="print-area" class="page-a4 p-10 shadow-xl border border-gray-300 flex flex-col justify-between text-gray-800">
+        
+        <div>
+          <!-- CABEÇALHO DA EMPRESA -->
+          <div class="grid grid-cols-12 gap-4 pb-4 border-b border-gray-400 items-center">
+            
+            <div class="col-span-4 flex justify-center items-center">
+              <img src="logo.png" alt="Metalúrgica Xavier" class="max-h-20 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'font-black text-xl text-slate-900 leading-tight\'>METALÚRGICA<br><span class=\'text-blue-700\'>XAVIÉR</span></div>';">
+            </div>
+
+            <div class="col-span-4 text-xs space-y-0.5 border-x border-gray-300 px-4">
+              <p>Rua Nova, 6760 - Pedra Mole</p>
+              <p>CEP: 64065-000</p>
+              <p>CNPJ:</p>
+              <p class="flex items-center gap-1">
+                Contato: (86) 98813-6559 
+                <span class="inline-block w-3.5 h-3.5 bg-emerald-500 text-white text-[9px] font-bold rounded-full text-center leading-3">✓</span>
+              </p>
+            </div>
+
+            <div class="col-span-4 text-right text-xs space-y-1">
+              <p class="font-semibold text-gray-700">ORÇAMENTO/ PEDIDO</p>
+              <p class="font-bold text-gray-900">Nº: <span id="view-number">000000</span></p>
+              <p class="text-gray-600">Emissão: <span id="view-date">dd/mm/aaaa</span></p>
+              <p class="text-gray-600">Validade: 15 dias</p>
+            </div>
+          </div>
+
+          <!-- DESTINATÁRIO -->
+          <div class="py-6 text-xs grid grid-cols-12 gap-4">
+ 		<div class="col-span-8 space-y-1">
+   			<p class="font-bold text-gray-800 text-sm mb-1">Destinatário / Cliente:</p>
+ 			<p class="text-gray-800 font-normal text-xs" id="view-client-name">Nome/ Razão social</p>
+   			<p class="text-gray-800 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
+   			<p class="text-gray-800 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
+  		</div>
+  			<div class="col-span-4 text-right flex flex-col justify-start">
+    			<span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">CPF / CNPJ</span>
+    			<p class="text-gray-900 font-normal text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
+  		</div>
+	</div>
+
+          <!-- TABELA DE ITENS -->
+          <div class="mt-2">
+            
+            <!-- CABEÇALHO DA TABELA -->
+            <div class="table-grid bg-[#E5E7EB] rounded-sm px-3 py-1.5 text-[11px] font-bold text-gray-700 uppercase tracking-tight">
+              <div>ITEM</div>
+              <div>DESCRIÇÃO DO PRODUTO</div>
+              <div class="text-center">QTD</div>
+              <div class="text-right">VALOR UNI</div>
+              <div class="text-right">VALOR TOTAL</div>
+            </div>
+
+            <!-- LINHAS DA TABELA -->
+            <div id="view-items-container" class="divide-y divide-gray-100 text-xs">
+              <div class="py-8 text-center text-gray-400 italic">Nenhum item cadastrado.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RODAPÉ E TOTAL -->
+        <div class="pt-6">
+          <div class="border-t border-gray-400 my-4"></div>
+          
+          <div class="grid grid-cols-12 gap-4 items-center">
+            <div class="col-span-7 bg-gray-100 p-3 rounded-lg text-[11px] text-gray-600 space-y-0.5">
+              <p>Este documento é uma proposta comercial sujeita a aprovação.</p>
+              <p>Garantia de fábrica de acordo com o especificado no contrato de execução.</p>
+            </div>
+
+            <div class="col-span-5 bg-gray-100 p-3 rounded-xl border border-gray-200 text-right">
+              <span class="text-[9px] font-bold text-gray-500 uppercase block tracking-wider">VALOR TOTAL DO ORÇAMENTO</span>
+              <span id="view-total" class="text-xl font-extrabold text-gray-900">R$ 00.000,00</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let items = [];
+
+    document.getElementById('view-number').innerText = String(Math.floor(1000 + Math.random() * 900000)).padStart(6, '0');
+
+    const today = new Date();
+    const formattedDate = String(today.getDate()).padStart(2, '0') + '/' + 
+                          String(today.getMonth() + 1).padStart(2, '0') + '/' + 
+                          today.getFullYear();
+    document.getElementById('view-date').innerText = formattedDate;
+
+    document.getElementById('input-client-phone').addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length > 11) v = v.substring(0, 11);
+      if (v.length > 10) {
+        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+      } else if (v.length > 5) {
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+      }
+      e.target.value = v;
+      document.getElementById('view-client-phone').innerText = v || 'Telefone/ Contato';
+    });
+
+    document.getElementById('input-client-doc').addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length <= 11) {
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      } else {
+        v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+        v = v.replace(/\.(\d{3})(\d)/, '.$1/$2');
+        v = v.replace(/(\d{4})(\d)/, '$1-$2');
+      }
+      e.target.value = v;
+      document.getElementById('view-client-doc').innerText = v || 'CPF/CNPJ do cliente';
+    });
+
+    document.getElementById('input-client-name').addEventListener('input', (e) => {
+      document.getElementById('view-client-name').innerText = e.target.value || 'Nome/ Razão social';
+    });
+
+    document.getElementById('input-client-address').addEventListener('input', (e) => {
+      document.getElementById('view-client-address').innerText = e.target.value || 'Endereço (opcional)';
+    });
+
+    document.getElementById('input-item-price').addEventListener('input', (e) => {
+      let value = e.target.value.replace(/\D/g, '');
+      value = (value / 100).toFixed(2) + '';
+      value = value.replace(".", ",");
+      value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+      e.target.value = value !== '0,00' ? value : '';
+    });
+
+    function salvarClienteNaPlanilha() {
+      const nome = document.getElementById('input-client-name').value.trim();
+      const endereco = document.getElementById('input-client-address').value.trim();
+      const telefone = document.getElementById('input-client-phone').value.trim();
+      const doc = document.getElementById('input-client-doc').value.trim();
+
+      if (!nome) {
+        alert("Por favor, preencha ao menos o Nome/Razão Social!");
+        return;
+      }
+
+      // SUBSTÍTUAS PELA URL DO SEU WEB APP GERADO NO GOOGLE APPS SCRIPT
+      const WEB_APP_URL = "SUA_URL_DO_WEB_APP_AQUI"; 
+
+      if (WEB_APP_URL === "SUA_URL_DO_WEB_APP_AQUI") {
+        alert("Cole a URL da implantação do Apps Script na variável WEB_APP_URL dentro do código!");
+        return;
+      }
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome: nome,
+          endereco: endereco,
+          cpfCnpj: doc,
+          contato: telefone
+        })
+      })
+      .then(() => {
+        alert("Cliente salvo na planilha com sucesso!");
+      })
+      .catch(error => {
+        console.error("Erro ao salvar:", error);
+        alert("Houve uma falha ao conectar com a planilha.");
+      });
+    }
+
+    function addItem() {
+      const title = document.getElementById('input-item-title').value.trim();
+      const desc = document.getElementById('input-item-desc').value.trim();
+      const qty = parseInt(document.getElementById('input-item-qty').value);
+      const priceRaw = document.getElementById('input-item-price').value;
+
+      if (!title || isNaN(qty) || !priceRaw) {
+        alert("Preencha ao menos o Nome do Item, Quantidade e Valor Unitário!");
+        return;
+      }
+
+      const numericPrice = parseFloat(priceRaw.replace(/\./g, '').replace(',', '.'));
+
+      items.push({
+        id: Date.now(),
+        title: title,
+        desc: desc,
+        qty: qty,
+        price: numericPrice,
+        total: qty * numericPrice
+      });
+
+      document.getElementById('input-item-title').value = '';
+      document.getElementById('input-item-desc').value = '';
+      document.getElementById('input-item-qty').value = '1';
+      document.getElementById('input-item-price').value = '';
+
+      render();
+    }
+
+    function removeItem(id) {
+      items = items.filter(item => item.id !== id);
+      render();
+    }
+
+    function formatMoney(val) {
+      return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function render() {
+      const panelList = document.getElementById('panel-items-list');
+      const container = document.getElementById('view-items-container');
+      const count = document.getElementById('items-count');
+      
+      panelList.innerHTML = '';
+      container.innerHTML = '';
+      count.innerText = items.length;
+
+      let grandTotal = 0;
+
+      if (items.length === 0) {
+        panelList.innerHTML = `<p class="text-xs text-gray-400 italic">Nenhum item adicionado ainda.</p>`;
+        container.innerHTML = `<div class="py-8 text-center text-gray-400 italic">Nenhum item cadastrado.</div>`;
+      } else {
+        items.forEach((item, index) => {
+          grandTotal += item.total;
+
+          panelList.innerHTML += `
+            <div class="flex items-center justify-between p-2 bg-gray-50 rounded border text-xs">
+              <div class="truncate max-w-[170px]">
+                <p class="font-bold text-gray-800 truncate">${item.title}</p>
+                ${item.desc ? `<p class="text-xs text-gray-500 truncate">${item.desc}</p>` : ''}
+                <p class="text-gray-500">${item.qty}x ${formatMoney(item.price)}</p>
+              </div>
+              <button onclick="removeItem(${item.id})" class="text-red-500 hover:text-red-700 font-bold p-1">🗑️</button>
+            </div>
+          `;
+
+          container.innerHTML += `
+            <div class="table-grid px-3 py-1.5 text-xs">
+              <div class="font-medium text-gray-500 text-xs">${String(index + 1).padStart(2, '0')}</div>
+              <div class="pr-2 leading-tight">
+                <span class="font-bold text-gray-900 text-xs block">${item.title}</span>
+                ${item.desc ? `<span class="text-[13px] text-gray-600 font-normal block mt-0.5">${item.desc}</span>` : ''}
+              </div>
+              <div class="text-center text-gray-800 font-medium text-xs">${item.qty}</div>
+              <div class="text-right text-gray-800 text-xs">${formatMoney(item.price)}</div>
+              <div class="text-right font-semibold text-gray-900 text-xs">${formatMoney(item.total)}</div>
+            </div>
+          `;
+        });
+      }
+
+      document.getElementById('view-total').innerText = formatMoney(grandTotal);
+    }
+
+    render();
+  </script>
+</body>
+</html>
