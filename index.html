@@ -257,30 +257,21 @@
                           today.getFullYear();
     document.getElementById('view-date').innerText = formattedDate;
 
-    // COMPARTILHAMENTO NATIVO (MOBILE / WEB SHARE API)
-    async function compartilharOrcamento() {
+    // COMPARTILHAR - COPIA MENSAGEM E ABRE TELA PARA GERAR PDF
+    function compartilharOrcamento() {
       const cliente = document.getElementById('input-client-name').value.trim() || 'Cliente';
       const numero = document.getElementById('view-number').innerText;
-      const total = document.getElementById('view-total').innerText;
 
-      const dadosCompartilhamento = {
-        title: `Orçamento Nº ${numero} - Metalúrgica Xavier`,
-        text: `Olá, ${cliente}! Segue o resumo do seu Orçamento Nº ${numero}.\nValor Total: ${total}`,
-        url: window.location.href
-      };
+      const textoMensagem = `Olá, ${cliente}! Segue o resumo do seu Orçamento Nº ${numero}.`;
 
-      if (navigator.share) {
-        try {
-          await navigator.share(dadosCompartilhamento);
-        } catch (err) {
-          if (err.name !== 'AbortError') {
-            alert('Erro ao abrir as opções de compartilhamento.');
-          }
-        }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textoMensagem);
+        alert(`Texto copiado:\n"${textoMensagem}"\n\nAgora selecione 'Salvar como PDF' na tela a seguir para compartilhar o arquivo.`);
       } else {
-        navigator.clipboard.writeText(`${dadosCompartilhamento.text}\n${dadosCompartilhamento.url}`);
-        alert('Link e resumo do orçamento copiados para a área de transferência!');
+        alert(`Mensagem para o cliente:\n"${textoMensagem}"`);
       }
+
+      window.print();
     }
 
     // INPUT MASKING & EVENT LISTENERS
