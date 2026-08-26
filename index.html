@@ -257,7 +257,7 @@
                           today.getFullYear();
     document.getElementById('view-date').innerText = formattedDate;
 
-    // COMPARTILHAR - COPIA MENSAGEM E ABRE TELA PARA GERAR PDF
+    // COMPARTILHAR - COPIA MENSAGEM (SEM VALOR E SEM LINK) E ABRE IMPRESSÃO/PDF
     function compartilharOrcamento() {
       const cliente = document.getElementById('input-client-name').value.trim() || 'Cliente';
       const numero = document.getElementById('view-number').innerText;
@@ -266,7 +266,7 @@
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textoMensagem);
-        alert(`Texto copiado:\n"${textoMensagem}"\n\nAgora selecione 'Salvar como PDF' na tela a seguir para compartilhar o arquivo.`);
+        alert(`Texto copiado:\n"${textoMensagem}"\n\nAgora selecione 'Salvar como PDF' na tela a seguir para enviar junto com a mensagem.`);
       } else {
         alert(`Mensagem para o cliente:\n"${textoMensagem}"`);
       }
