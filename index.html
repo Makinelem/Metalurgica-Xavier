@@ -44,14 +44,22 @@
     
     <!-- PAINEL LATERAL DE PREENCHIMENTO -->
     <div class="lg:col-span-4 bg-white p-5 rounded-2xl shadow-md border border-gray-200 no-print space-y-4">
-      <div class="border-b pb-3">
-        <h2 class="text-lg font-bold text-slate-900">Preenchimento do Orçamento</h2>
-        <p class="text-xs text-gray-500">Insira os dados do cliente e os itens abaixo</p>
+      <div class="border-b pb-3 flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Preenchimento do Orçamento</h2>
+          <p class="text-xs text-gray-500">Insira os dados do cliente e os itens abaixo</p>
+        </div>
       </div>
 
       <!-- Dados do Cliente -->
       <div class="space-y-2">
-        <h3 class="font-bold text-xs text-gray-400 uppercase tracking-wider">Cliente</h3>
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-xs text-gray-400 uppercase tracking-wider">Cliente</h3>
+          <button onclick="abrirModalClientes()" type="button" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded border border-indigo-200 transition flex items-center gap-1 cursor-pointer">
+            🔍 Buscar Salvo
+          </button>
+        </div>
+
         <div>
           <label class="text-xs text-gray-600 font-medium">Nome / Razão Social</label>
           <input type="text" id="input-client-name" placeholder="Ex: João da Silva" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
@@ -68,6 +76,7 @@
           <label class="text-xs text-gray-600 font-medium">CPF / CNPJ (Opcional)</label>
           <input type="text" id="input-client-doc" placeholder="Ex: 000.000.000-00" maxlength="18" class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none">
         </div>
+
         <button id="btn-salvar-cliente" onclick="salvarClienteNaPlanilha()" type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
           <span>💾</span> Salvar Cliente na Planilha
         </button>
@@ -148,23 +157,22 @@
             </div>
           </div>
 
-          <!-- DESTINATÁRIO (ALINHADO E PROPORCIONAL) -->
+          <!-- DESTINATÁRIO -->
           <div class="py-6 text-xs grid grid-cols-12 gap-4">
             <div class="col-span-8 space-y-1">
               <p class="font-bold text-gray-800 text-xs mb-1">Destinatário / Cliente:</p>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-name">Nome/ Razão social</p>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
+              <p class="text-gray-900 font-semibold text-xs" id="view-client-name">Nome/ Razão social</p>
+              <p class="text-gray-600 font-normal text-xs" id="view-client-address">Endereço (opcional)</p>
+              <p class="text-gray-700 font-normal text-xs" id="view-client-phone">Telefone/ Contato</p>
             </div>
             <div class="col-span-4 text-right flex flex-col justify-start">
               <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">CPF / CNPJ</span>
-              <p class="text-gray-800 font-normal text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
+              <p class="text-gray-900 font-semibold text-xs" id="view-client-doc">CPF/CNPJ do cliente</p>
             </div>
           </div>
 
           <!-- TABELA DE ITENS -->
           <div class="mt-2">
-            
             <div class="table-grid bg-[#E5E7EB] rounded-sm px-3 py-1.5 text-[11px] font-bold text-gray-700 uppercase tracking-tight">
               <div>ITEM</div>
               <div>DESCRIÇÃO DO PRODUTO</div>
@@ -201,8 +209,33 @@
 
   </div>
 
+  <!-- MODAL DE SELEÇÃO DE CLIENTES -->
+  <div id="modal-clientes" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 no-print">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden border flex flex-col max-h-[80vh]">
+      
+      <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm flex items-center gap-2">📇 Contatos Cadastrados</h3>
+        <button onclick="fecharModalClientes()" class="text-gray-400 hover:text-white font-bold text-lg leading-none cursor-pointer">&times;</button>
+      </div>
+
+      <div class="p-3 border-b bg-gray-50">
+        <input type="text" id="search-client" oninput="filtrarClientes()" placeholder="🔍 Pesquisar por nome ou telefone..." class="w-full border rounded-lg p-2 text-xs focus:ring-2 focus:ring-slate-900 outline-none bg-white">
+      </div>
+
+      <div id="modal-client-list" class="p-4 space-y-2 overflow-y-auto flex-1">
+        <p class="text-xs text-gray-400 italic text-center py-4">Carregando contatos...</p>
+      </div>
+
+      <div class="p-3 bg-gray-50 border-t text-right">
+        <button onclick="fecharModalClientes()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold py-1.5 px-4 rounded-lg cursor-pointer">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let items = [];
+    let clientesCadastrados = [];
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOvhDMOY_z7nz3pG8ZFK9gm2Kqqjsn0QIWLLig3MfDbuR60OcfIBlbliOdXzDMhttLUQ/exec";
 
     document.getElementById('view-number').innerText = String(Math.floor(1000 + Math.random() * 900000)).padStart(6, '0');
 
@@ -212,6 +245,7 @@
                           today.getFullYear();
     document.getElementById('view-date').innerText = formattedDate;
 
+    // MÁSCARAS E EVENTOS DE INPUT
     document.getElementById('input-client-phone').addEventListener('input', (e) => {
       let v = e.target.value.replace(/\D/g, '');
       if (v.length > 11) v = v.substring(0, 11);
@@ -258,6 +292,77 @@
       e.target.value = value !== '0,00' ? value : '';
     });
 
+    // FUNÇÕES DO MODAL DE CLIENTES
+    async function abrirModalClientes() {
+      document.getElementById('modal-clientes').classList.remove('hidden');
+      document.getElementById('search-client').value = '';
+      
+      const listContainer = document.getElementById('modal-client-list');
+      listContainer.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-4">Buscando lista na planilha...</p>`;
+
+      try {
+        const response = await fetch(WEB_APP_URL);
+        clientesCadastrados = await response.json();
+        renderListaClientes(clientesCadastrados);
+      } catch (error) {
+        console.error("Erro ao carregar clientes:", error);
+        listContainer.innerHTML = `<p class="text-xs text-red-500 italic text-center py-4">Erro ao carregar lista. Verifique a conexão.</p>`;
+      }
+    }
+
+    function fecharModalClientes() {
+      document.getElementById('modal-clientes').classList.add('hidden');
+    }
+
+    function renderListaClientes(lista) {
+      const container = document.getElementById('modal-client-list');
+      container.innerHTML = '';
+
+      if (lista.length === 0) {
+        container.innerHTML = `<p class="text-xs text-gray-400 italic text-center py-4">Nenhum cliente encontrado.</p>`;
+        return;
+      }
+
+      lista.forEach((c, index) => {
+        container.innerHTML += `
+          <div onclick="selecionarCliente(${index})" class="p-3 bg-gray-50 hover:bg-indigo-50 border rounded-lg cursor-pointer transition flex justify-between items-center group">
+            <div class="text-xs">
+              <p class="font-bold text-gray-900 group-hover:text-indigo-900">${c.nome || 'Sem Nome'}</p>
+              <p class="text-gray-500 text-[11px]">${c.contato || 'Sem contato'} | ${c.cpfCnpj || 'Sem documento'}</p>
+              ${c.endereco ? `<p class="text-gray-400 text-[10px]">${c.endereco}</p>` : ''}
+            </div>
+            <span class="text-xs font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">Usar ➔</span>
+          </div>
+        `;
+      });
+    }
+
+    function filtrarClientes() {
+      const termo = document.getElementById('search-client').value.toLowerCase();
+      const filtrados = clientesCadastrados.filter(c => 
+        (c.nome && c.nome.toLowerCase().includes(termo)) ||
+        (c.contato && c.contato.toLowerCase().includes(termo))
+      );
+      renderListaClientes(filtrados);
+    }
+
+    function selecionarCliente(index) {
+      const c = clientesCadastrados[index];
+      
+      document.getElementById('input-client-name').value = c.nome || '';
+      document.getElementById('input-client-address').value = c.endereco || '';
+      document.getElementById('input-client-phone').value = c.contato || '';
+      document.getElementById('input-client-doc').value = c.cpfCnpj || '';
+
+      document.getElementById('view-client-name').innerText = c.nome || 'Nome/ Razão social';
+      document.getElementById('view-client-address').innerText = c.endereco || 'Endereço (opcional)';
+      document.getElementById('view-client-phone').innerText = c.contato || 'Telefone/ Contato';
+      document.getElementById('view-client-doc').innerText = c.cpfCnpj || 'CPF/CNPJ do cliente';
+
+      fecharModalClientes();
+    }
+
+    // SALVAR CLIENTE
     async function salvarClienteNaPlanilha() {
       const nome = document.getElementById('input-client-name').value.trim();
       const endereco = document.getElementById('input-client-address').value.trim();
@@ -269,8 +374,6 @@
         alert("Por favor, preencha ao menos o Nome/Razão Social!");
         return;
       }
-
-      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOvhDMOY_z7nz3pG8ZFK9gm2Kqqjsn0QIWLLig3MfDbuR60OcfIBlbliOdXzDMhttLUQ/exec";
 
       const textoOriginal = btn.innerHTML;
       btn.innerHTML = "⏳ Enviando...";
@@ -299,6 +402,7 @@
       }
     }
 
+    // GESTÃO DE ITENS DO ORÇAMENTO
     function addItem() {
       const title = document.getElementById('input-item-title').value.trim();
       const desc = document.getElementById('input-item-desc').value.trim();
@@ -327,6 +431,18 @@
       document.getElementById('input-item-price').value = '';
 
       render();
+    }
+
+    function editItem(id) {
+      const item = items.find(item => item.id === id);
+      if (!item) return;
+
+      document.getElementById('input-item-title').value = item.title;
+      document.getElementById('input-item-desc').value = item.desc || '';
+      document.getElementById('input-item-qty').value = item.qty;
+      document.getElementById('input-item-price').value = item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      removeItem(id);
     }
 
     function removeItem(id) {
@@ -358,12 +474,15 @@
 
           panelList.innerHTML += `
             <div class="flex items-center justify-between p-2 bg-gray-50 rounded border text-xs">
-              <div class="truncate max-w-[170px]">
+              <div class="truncate max-w-[150px]">
                 <p class="font-bold text-gray-800 truncate">${item.title}</p>
                 ${item.desc ? `<p class="text-xs text-gray-500 truncate">${item.desc}</p>` : ''}
                 <p class="text-gray-500">${item.qty}x ${formatMoney(item.price)}</p>
               </div>
-              <button onclick="removeItem(${item.id})" class="text-red-500 hover:text-red-700 font-bold p-1">🗑️</button>
+              <div class="flex items-center gap-1">
+                <button onclick="editItem(${item.id})" title="Editar Item" class="text-blue-600 hover:text-blue-800 font-bold p-1 cursor-pointer">✏️</button>
+                <button onclick="removeItem(${item.id})" title="Excluir Item" class="text-red-500 hover:text-red-700 font-bold p-1 cursor-pointer">🗑️</button>
+              </div>
             </div>
           `;
 
