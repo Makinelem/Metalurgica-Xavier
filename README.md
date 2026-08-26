@@ -1,2 +1,0 @@
-# Metalurgica-Xavier
-Metalúrgica Xaviér
